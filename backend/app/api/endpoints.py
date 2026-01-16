@@ -39,8 +39,18 @@ async def execute_workflow(request: QueryRequest):
         docs = vector_store.query_similar(request.query)
         context = "\n".join(docs)
     
-    response = llm_orchestrator.execute_query(request.query, context, request.provider)
-    return {"response": response, "context_used": context}
+    try:
+        response = llm_orchestrator.execute_query(request.query, context, request.provider)
+        return {"response": response, "context_used": context}
+    except Exception as e:
+        # Check if it's a 429/Resource Exhausted error
+        error_msg = str(e)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            raise HTTPException(
+                status_code=429, 
+                detail="Gemini API quota exceeded. Please wait a moment and try again."
+            )
+        raise HTTPException(status_code=500, detail=f"LLM Error: {error_msg}")
 
 @router.post("/workflows")
 def save_workflow(workflow: WorkflowCreate, db: Session = Depends(get_db)):

@@ -1,7 +1,6 @@
-
-import os
 import openai
-import google.generativeai as genai
+from google import genai
+import os
 from typing import Literal
 
 class LLMOrchestrator:
@@ -11,9 +10,10 @@ class LLMOrchestrator:
             self.openai_api_key = None
             
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+        self.gemini_client = None
         
         if self.gemini_api_key:
-            genai.configure(api_key=self.gemini_api_key)
+            self.gemini_client = genai.Client(api_key=self.gemini_api_key)
 
     def execute_query(self, query: str, context: str = "", provider: Literal["openai", "gemini"] = "gemini") -> str:
         # Force Gemini usage as requested ("in place of OpenAI")
@@ -30,9 +30,11 @@ class LLMOrchestrator:
             return response.choices[0].message.content
             
         # Fallback to Gemini if provider is openai but key is missing, or if provider is gemini
-        if (provider == "gemini" or provider == "openai") and self.gemini_api_key:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(prompt)
+        if (provider == "gemini" or provider == "openai") and self.gemini_client:
+            response = self.gemini_client.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=prompt
+            )
             return response.text
             
         return "LLM Provider not configured or API Key missing."

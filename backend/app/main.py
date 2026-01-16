@@ -1,14 +1,20 @@
 
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import os
+import logging
 
 load_dotenv()
 
 from app.api import endpoints
 from app.models import Base, engine
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
