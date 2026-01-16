@@ -1,0 +1,14 @@
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: workflow-backend-monitor
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: workflow-backend
+  endpoints:
+  - port: web
+    path: /metrics
